@@ -270,19 +270,13 @@ export default function HeroSection() {
         {/* CTAs */}
         <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "4rem" }}>
           <button
-            onClick={() => (window.location.href = "/works")}
+            onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}
             className="btn-primary"
           >
-            View Our Work
+            Start a Project
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </button>
-          <button
-            onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}
-            className="btn-ghost"
-          >
-            Start a Project
           </button>
         </div>
 

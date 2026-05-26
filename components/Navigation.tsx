@@ -47,7 +47,7 @@ export default function Navigation() {
           padding: isScrolled ? "0.75rem 0" : "1.25rem 0",
           background: isScrolled ? "rgba(5,5,5,0.92)" : "transparent",
           backdropFilter: isScrolled ? "blur(20px)" : "none",
-          borderBottom: isScrolled ? "1px solid rgba(201,169,110,0.12)" : "none",
+          borderBottom: "none",
         }}
       >
         <div
