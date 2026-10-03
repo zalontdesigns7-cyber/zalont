@@ -1,305 +1,1621 @@
 "use client";
 
-import React, { useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  motion,
+  useInView,
+  type Variants,
+} from "framer-motion";
+
+import {
+  Clock,
+  Loader2,
+  Mail,
+  MapPin,
+  Send,
+  Terminal,
+} from "lucide-react";
+
 import { toast } from "sonner";
+
+/* =========================================================
+   CONTACT CONFIG
+========================================================= */
 
 const ZALONT_EMAIL = "zalontdesigns7@gmail.com";
 
+const TERMINAL_LINE_1 =
+  "> ESTABLISHING CONNECTION...";
+
+const TERMINAL_LINE_2 =
+  "> CONNECTION SECURED.";
+
+const TYPING_SPEED = 45;
+const SECURE_DELAY = 1200;
+
+/* =========================================================
+   CONTACT DATA
+========================================================= */
+
 const contactDetails = [
   {
-    icon: (
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-      </svg>
-    ),
+    icon: Mail,
     label: "Email",
     value: ZALONT_EMAIL,
     href: `mailto:${ZALONT_EMAIL}`,
-    color: "var(--gold)",
-    bg: "rgba(201,169,110,0.08)",
-    border: "var(--border-gold)",
+    iconColor: "#c9a96e",
+    iconBg: "rgba(201,169,110,0.07)",
+    iconBorder: "rgba(201,169,110,0.22)",
   },
   {
-    icon: (
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-      </svg>
-    ),
+    icon: MapPin,
     label: "Based In",
     value: "India · Working Globally",
     href: null,
-    color: "rgba(14,100,180,0.9)",
-    bg: "rgba(14,40,80,0.35)",
-    border: "rgba(14,60,120,0.45)",
+    iconColor: "rgba(150,185,220,0.9)",
+    iconBg: "rgba(30,65,105,0.18)",
+    iconBorder: "rgba(80,130,180,0.24)",
   },
   {
-    icon: (
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
+    icon: Clock,
     label: "Response Time",
     value: "Within 24 hours",
     href: null,
-    color: "rgba(200,200,200,0.8)",
-    bg: "rgba(255,255,255,0.04)",
-    border: "var(--border)",
+    iconColor: "rgba(220,220,220,0.8)",
+    iconBg: "rgba(255,255,255,0.035)",
+    iconBorder: "rgba(255,255,255,0.1)",
   },
 ];
 
+const clientTypes = [
+  {
+    number: "01",
+    label: "Startups",
+    desc: "Launch with impact",
+  },
+  {
+    number: "02",
+    label: "Colleges",
+    desc: "Engage & inspire",
+  },
+  {
+    number: "03",
+    label: "Businesses",
+    desc: "Stand out",
+  },
+];
+
+/* =========================================================
+   MOTION
+========================================================= */
+
+const sectionVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const fadeUpVariant: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 28,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
+
+const cardStagger: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const cardVariant: Variants = {
+  hidden: {
+    opacity: 0,
+    x: -20,
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.55,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
+
+const formVariant: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 35,
+    scale: 0.98,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.8,
+      ease: [0.16, 1, 0.3, 1],
+      delay: 0.25,
+    },
+  },
+};
+
+/* =========================================================
+   TERMINAL TYPING
+========================================================= */
+
+function useTerminalTyping(inView: boolean) {
+  const [line1, setLine1] = useState("");
+  const [line2, setLine2] = useState("");
+
+  const [phase, setPhase] = useState<
+    "idle" | "typing1" | "pause" | "typing2" | "done"
+  >("idle");
+
+  const hasStarted = useRef(false);
+
+  useEffect(() => {
+    if (!inView || hasStarted.current) {
+      return;
+    }
+
+    hasStarted.current = true;
+    setPhase("typing1");
+
+    let charIndex = 0;
+    let charIndex2 = 0;
+
+    let typeInterval: ReturnType<typeof setInterval> | null =
+      null;
+
+    let typeInterval2: ReturnType<typeof setInterval> | null =
+      null;
+
+    let timeoutId: ReturnType<typeof setTimeout> | null =
+      null;
+
+    typeInterval = setInterval(() => {
+      charIndex += 1;
+
+      setLine1(
+        TERMINAL_LINE_1.slice(0, charIndex)
+      );
+
+      if (
+        charIndex >=
+        TERMINAL_LINE_1.length
+      ) {
+        if (typeInterval) {
+          clearInterval(typeInterval);
+          typeInterval = null;
+        }
+
+        setPhase("pause");
+
+        timeoutId = setTimeout(() => {
+          setPhase("typing2");
+
+          typeInterval2 = setInterval(() => {
+            charIndex2 += 1;
+
+            setLine2(
+              TERMINAL_LINE_2.slice(
+                0,
+                charIndex2
+              )
+            );
+
+            if (
+              charIndex2 >=
+              TERMINAL_LINE_2.length
+            ) {
+              if (typeInterval2) {
+                clearInterval(typeInterval2);
+                typeInterval2 = null;
+              }
+
+              setPhase("done");
+            }
+          }, TYPING_SPEED);
+        }, SECURE_DELAY);
+      }
+    }, TYPING_SPEED);
+
+    return () => {
+      if (typeInterval) {
+        clearInterval(typeInterval);
+      }
+
+      if (typeInterval2) {
+        clearInterval(typeInterval2);
+      }
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [inView]);
+
+  return {
+    line1,
+    line2,
+    phase,
+  };
+}
+
+/* =========================================================
+   HUD CORNERS
+========================================================= */
+
+function HudCorners() {
+  const cornerStyle: React.CSSProperties = {
+    position: "absolute",
+    width: 22,
+    height: 22,
+    pointerEvents: "none",
+  };
+
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        style={{
+          ...cornerStyle,
+          top: 0,
+          left: 0,
+          borderTop:
+            "1px solid rgba(201,169,110,0.45)",
+          borderLeft:
+            "1px solid rgba(201,169,110,0.45)",
+        }}
+      />
+
+      <span
+        aria-hidden="true"
+        style={{
+          ...cornerStyle,
+          top: 0,
+          right: 0,
+          borderTop:
+            "1px solid rgba(201,169,110,0.45)",
+          borderRight:
+            "1px solid rgba(201,169,110,0.45)",
+        }}
+      />
+
+      <span
+        aria-hidden="true"
+        style={{
+          ...cornerStyle,
+          bottom: 0,
+          left: 0,
+          borderBottom:
+            "1px solid rgba(201,169,110,0.45)",
+          borderLeft:
+            "1px solid rgba(201,169,110,0.45)",
+        }}
+      />
+
+      <span
+        aria-hidden="true"
+        style={{
+          ...cornerStyle,
+          bottom: 0,
+          right: 0,
+          borderBottom:
+            "1px solid rgba(201,169,110,0.45)",
+          borderRight:
+            "1px solid rgba(201,169,110,0.45)",
+        }}
+      />
+    </>
+  );
+}
+
+/* =========================================================
+   CONTACT CARD
+========================================================= */
+
+function ContactCard({
+  item,
+}: {
+  item: (typeof contactDetails)[number];
+}) {
+  const Icon = item.icon;
+
+  const content = (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 16,
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: item.iconBg,
+          border: `1px solid ${item.iconBorder}`,
+        }}
+      >
+        <Icon
+          size={18}
+          strokeWidth={1.5}
+          style={{
+            color: item.iconColor,
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            marginBottom: 7,
+            fontFamily:
+              "var(--font-geist-mono), monospace",
+            fontSize: 8,
+            fontWeight: 500,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.35)",
+          }}
+        >
+          {item.label}
+        </div>
+
+        <div
+          style={{
+            fontFamily:
+              "var(--font-jakarta), sans-serif",
+            fontSize: 13,
+            fontWeight: 500,
+            lineHeight: 1.5,
+            color: item.href
+              ? "#d9c49a"
+              : "rgba(255,255,255,0.62)",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {item.value}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (item.href) {
+    return (
+      <motion.a
+        href={item.href}
+        variants={cardVariant}
+        whileHover={{
+          y: -3,
+          borderColor:
+            "rgba(201,169,110,0.42)",
+          backgroundColor:
+            "rgba(201,169,110,0.055)",
+        }}
+        transition={{
+          duration: 0.25,
+        }}
+        style={{
+          position: "relative",
+          display: "block",
+          padding: 20,
+          background:
+            "rgba(7,16,30,0.62)",
+          border:
+            "1px solid rgba(255,255,255,0.08)",
+          textDecoration: "none",
+          overflow: "hidden",
+        }}
+      >
+        {content}
+      </motion.a>
+    );
+  }
+
+  return (
+    <motion.div
+      variants={cardVariant}
+      whileHover={{
+        y: -3,
+        borderColor:
+          "rgba(201,169,110,0.28)",
+        backgroundColor:
+          "rgba(7,16,30,0.78)",
+      }}
+      transition={{
+        duration: 0.25,
+      }}
+      style={{
+        position: "relative",
+        padding: 20,
+        background:
+          "rgba(7,16,30,0.62)",
+        border:
+          "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      {content}
+    </motion.div>
+  );
+}
+
+/* =========================================================
+   CONTACT SECTION
+========================================================= */
+
 export default function ContactSection() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [sending, setSending] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [sending, setSending] =
+    useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sectionRef =
+    useRef<HTMLElement>(null);
+
+  const terminalRef =
+    useRef<HTMLDivElement>(null);
+
+  const isInView = useInView(
+    sectionRef,
+    {
+      once: true,
+      margin: "-100px",
+    }
+  );
+
+  const terminalInView = useInView(
+    terminalRef,
+    {
+      once: true,
+      margin: "-50px",
+    }
+  );
+
+  const {
+    line1,
+    line2,
+    phase,
+  } =
+    useTerminalTyping(
+      terminalInView
+    );
+
+  /* =======================================================
+     FORM HANDLERS
+  ======================================================= */
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value } = e.target;
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
-      toast.error("Please fill in all fields.");
+
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const message = form.message.trim();
+
+    if (!name || !email || !message) {
+      toast.error(
+        "Please fill in all fields."
+      );
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      toast.error("Please enter a valid email address.");
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        email
+      )
+    ) {
+      toast.error(
+        "Please enter a valid email address."
+      );
       return;
     }
+
     setSending(true);
-    
+
     try {
-      const response = await fetch(`https://formsubmit.co/ajax/${ZALONT_EMAIL}`, {
-        method: "POST",
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          message: form.message,
-          _subject: `New Project Enquiry from ${form.name}`
-        })
-      });
+      const response = await fetch(
+        `https://formsubmit.co/ajax/${ZALONT_EMAIL}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+            Accept:
+              "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            message,
+            _subject:
+              `New Project Enquiry from ${name}`,
+          }),
+        }
+      );
 
       if (response.ok) {
-        toast.success("Message sent successfully! We'll reply within 24 hours. 🚀");
-        setForm({ name: "", email: "", message: "" });
+        toast.success(
+          "Message sent successfully! We'll reply within 24 hours. 🚀"
+        );
+
+        setForm({
+          name: "",
+          email: "",
+          message: "",
+        });
       } else {
-        toast.error("Failed to send message. Please try emailing us directly.");
+        toast.error(
+          "Failed to send message. Please email us directly."
+        );
       }
-    } catch (error) {
-      toast.error("An error occurred. Please try emailing us directly.");
+    } catch {
+      toast.error(
+        "Something went wrong. Please email us directly."
+      );
     } finally {
       setSending(false);
     }
   };
 
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
-    <section id="contact" style={{ padding: "8rem 1.5rem", position: "relative" }}>
-      {/* Navy dual-tone background panel for this section */}
+    <section
+      id="contact"
+      ref={sectionRef}
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        overflow: "hidden",
+        background:
+          "radial-gradient(circle at 50% 35%, rgba(201,169,110,0.045), transparent 35%), #020408",
+        color: "#ffffff",
+        padding:
+          "clamp(100px, 12vw, 160px) 20px 70px",
+      }}
+    >
+      {/* ===================================================
+          BACKGROUND GRID
+      =================================================== */}
+
       <div
+        aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
+          pointerEvents: "none",
+          backgroundImage:
+            "linear-gradient(rgba(201,169,110,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(201,169,110,0.025) 1px, transparent 1px)",
+          backgroundSize:
+            "80px 80px",
+          maskImage:
+            "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)",
+        }}
+      />
+
+      {/* Central glow */}
+
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "35%",
+          width: 700,
+          height: 700,
+          transform:
+            "translate(-50%, -50%)",
+          borderRadius: "50%",
           background:
-            "linear-gradient(180deg, transparent 0%, rgba(7,16,30,0.55) 40%, rgba(7,16,30,0.55) 60%, transparent 100%)",
+            "radial-gradient(circle, rgba(201,169,110,0.055), transparent 68%)",
+          filter: "blur(20px)",
           pointerEvents: "none",
         }}
       />
 
-      <div className="section-divider" style={{ maxWidth: 1280, margin: "0 auto 5rem" }} />
+      {/* ===================================================
+          DATA STREAMS
+      =================================================== */}
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative" }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-          <span className="dual-text" style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", display: "block", marginBottom: "0.5rem" }}>
-            Work With Us
-          </span>
-          <h2 className="font-brand dual-text" style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", lineHeight: 1, marginBottom: "1rem" }}>
-            Let's Create Together
-          </h2>
-          <p style={{ color: "var(--w60)", maxWidth: 480, margin: "0 auto", lineHeight: 1.8, fontSize: "0.95rem" }}>
-            Ready to bring your vision to life? Tell us about your project and we'll respond within 24 hours.
-          </p>
-        </div>
-
-        <div
-          style={{ display: "grid", gap: "2rem", alignItems: "start" }}
-          className="lg:grid-cols-5"
-        >
-          {/* Left — info cards */}
-          <div className="lg:col-span-2" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {contactDetails.map((item, i) => {
-              const inner = (
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-                  <div
-                    style={{
-                      width: 42,
-                      height: 42,
-                      flexShrink: 0,
-                      background: item.bg,
-                      border: `1px solid ${item.border}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: item.color,
-                    }}
-                  >
-                    {item.icon}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--w40)", marginBottom: "0.2rem" }}>
-                      {item.label}
-                    </p>
-                    <p style={{ fontSize: "0.88rem", fontWeight: 600, color: item.href ? "var(--gold-light)" : "var(--w80)", wordBreak: "break-all" }}>
-                      {item.value}
-                    </p>
-                  </div>
-                </div>
-              );
-              return item.href ? (
-                <a
-                  key={i}
-                  href={item.href}
-                  style={{
-                    display: "block",
-                    padding: "1.25rem",
-                    background: "rgba(7,16,30,0.6)",
-                    border: "1px solid var(--border)",
-                    textDecoration: "none",
-                    transition: "border-color 0.25s ease, background 0.25s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border-gold)";
-                    (e.currentTarget as HTMLAnchorElement).style.background = "rgba(7,16,30,0.85)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
-                    (e.currentTarget as HTMLAnchorElement).style.background = "rgba(7,16,30,0.6)";
-                  }}
-                >
-                  {inner}
-                </a>
-              ) : (
-                <div
-                  key={i}
-                  style={{
-                    padding: "1.25rem",
-                    background: "rgba(7,16,30,0.4)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  {inner}
-                </div>
-              );
-            })}
-
-            {/* Who we work with */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        {[8, 27, 73, 91].map(
+          (left, index) => (
             <div
+              key={left}
+              className="data-stream-line"
               style={{
-                padding: "1.5rem",
-                background: "rgba(201,169,110,0.04)",
-                border: "1px solid var(--border-gold)",
-                marginTop: "0.25rem",
+                position: "absolute",
+                left: `${left}%`,
+                top: "-20%",
+                height: "140%",
+                width: 1,
+                opacity: 0.25,
+                animationDelay: `${
+                  index * 1.2
+                }s`,
+                animationDuration: `${
+                  5 + index * 0.7
+                }s`,
               }}
-            >
-              <p style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--w40)", marginBottom: "1rem" }}>
-                We Work With
-              </p>
-              {[
-                { emoji: "🚀", label: "Startups", desc: "Launch with impact" },
-                { emoji: "🎓", label: "Colleges", desc: "Engage & inspire" },
-                { emoji: "🏢", label: "Businesses", desc: "Stand out" },
-              ].map((c) => (
-                <div key={c.label} style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.85rem" }}>
-                  <span style={{ fontSize: "1.1rem" }}>{c.emoji}</span>
-                  <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--w80)" }}>{c.label}</span>
-                  <span style={{ fontSize: "0.78rem", color: "var(--w40)" }}>— {c.desc}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+            />
+          )
+        )}
+      </div>
 
-          {/* Right — form */}
-          <form
-            onSubmit={handleSubmit}
-            className="lg:col-span-3"
+      {/* ===================================================
+          CONTENT
+      =================================================== */}
+
+      <motion.div
+        variants={sectionVariants}
+        initial="hidden"
+        animate={
+          isInView
+            ? "visible"
+            : "hidden"
+        }
+        style={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: 1200,
+          margin: "0 auto",
+        }}
+      >
+        {/* =================================================
+            SECTION IDENTIFIER
+        ================================================= */}
+
+        <motion.div
+          variants={fadeUpVariant}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent:
+              "space-between",
+            gap: 20,
+            marginBottom: 30,
+          }}
+        >
+          <div
             style={{
-              padding: "2.25rem",
-              background: "rgba(7,16,30,0.60)",
-              border: "1px solid var(--border)",
-              backdropFilter: "blur(12px)",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
             }}
           >
-            <h3 className="dual-text" style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "1.75rem", letterSpacing: "0.02em" }}>
+            <span
+              style={{
+                width: 32,
+                height: 1,
+                background: "#c9a96e",
+                boxShadow:
+                  "0 0 12px rgba(201,169,110,0.5)",
+              }}
+            />
+
+            <span
+              style={{
+                fontFamily:
+                  "var(--font-geist-mono), monospace",
+                fontSize: 9,
+                letterSpacing:
+                  "0.25em",
+                color: "#c9a96e",
+              }}
+            >
+              05 / CONTACT
+            </span>
+          </div>
+
+          <span
+            style={{
+              fontFamily:
+                "var(--font-geist-mono), monospace",
+              fontSize: 8,
+              letterSpacing:
+                "0.18em",
+              color:
+                "rgba(255,255,255,0.25)",
+            }}
+          >
+            ZLNT / FINAL NODE
+          </span>
+        </motion.div>
+
+        {/* =================================================
+            TERMINAL
+        ================================================= */}
+
+        <motion.div
+          ref={terminalRef}
+          variants={fadeUpVariant}
+          style={{
+            width: "100%",
+            maxWidth: 480,
+            margin: "0 auto 34px",
+            padding: "14px 18px",
+            background:
+              "rgba(3,6,11,0.88)",
+            border:
+              "1px solid rgba(201,169,110,0.15)",
+            boxShadow:
+              "0 20px 70px rgba(0,0,0,0.25)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 9,
+              paddingBottom: 10,
+              marginBottom: 10,
+              borderBottom:
+                "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <Terminal
+              size={12}
+              color="#c9a96e"
+              strokeWidth={1.5}
+            />
+
+            <span
+              style={{
+                fontFamily:
+                  "var(--font-geist-mono), monospace",
+                fontSize: 8,
+                letterSpacing:
+                  "0.17em",
+                color:
+                  "rgba(255,255,255,0.35)",
+              }}
+            >
+              ZALONT COMM TERMINAL
+            </span>
+
+            <span
+              style={{
+                marginLeft: "auto",
+                width: 5,
+                height: 5,
+                borderRadius:
+                  "50%",
+                background:
+                  phase === "done"
+                    ? "#4ade80"
+                    : "#c9a96e",
+                boxShadow:
+                  phase === "done"
+                    ? "0 0 10px rgba(74,222,128,0.8)"
+                    : "0 0 10px rgba(201,169,110,0.7)",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              fontFamily:
+                "var(--font-geist-mono), monospace",
+              fontSize: 11,
+              lineHeight: 1.8,
+              color:
+                "rgba(255,255,255,0.58)",
+            }}
+          >
+            <div>
+              {line1}
+
+              {phase ===
+                "typing1" && (
+                <span
+                  style={{
+                    display:
+                      "inline-block",
+                    width: 7,
+                    height: 13,
+                    marginLeft: 3,
+                    verticalAlign:
+                      "middle",
+                    background:
+                      "#c9a96e",
+                    animation:
+                      "cursor-blink 0.8s step-end infinite",
+                  }}
+                />
+              )}
+            </div>
+
+            {(phase ===
+              "typing2" ||
+              phase === "done") && (
+              <div
+                style={{
+                  color:
+                    phase === "done"
+                      ? "#4ade80"
+                      : "#c9a96e",
+                }}
+              >
+                {line2}
+
+                {phase ===
+                  "typing2" && (
+                  <span
+                    style={{
+                      display:
+                        "inline-block",
+                      width: 7,
+                      height: 13,
+                      marginLeft: 3,
+                      verticalAlign:
+                        "middle",
+                      background:
+                        "#4ade80",
+                      animation:
+                        "cursor-blink 0.8s step-end infinite",
+                    }}
+                  />
+                )}
+              </div>
+            )}
+
+            {phase ===
+              "pause" && (
+              <div>
+                <span
+                  style={{
+                    display:
+                      "inline-block",
+                    width: 7,
+                    height: 13,
+                    background:
+                      "#c9a96e",
+                    animation:
+                      "cursor-blink 0.8s step-end infinite",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* =================================================
+            HEADER
+        ================================================= */}
+
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: 65,
+          }}
+        >
+          <motion.div
+            variants={fadeUpVariant}
+            style={{
+              marginBottom: 12,
+              fontFamily:
+                "var(--font-geist-mono), monospace",
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing:
+                "0.3em",
+              textTransform:
+                "uppercase",
+              color:
+                "rgba(201,169,110,0.75)",
+            }}
+          >
+            WORK WITH US
+          </motion.div>
+
+          <motion.h2
+            variants={fadeUpVariant}
+            style={{
+              margin: 0,
+              fontFamily:
+                "var(--font-orbitron), sans-serif",
+              fontSize:
+                "clamp(40px, 7vw, 82px)",
+              lineHeight: 0.95,
+              fontWeight: 700,
+              letterSpacing:
+                "-0.055em",
+              color: "#eee1c6",
+              textShadow:
+                "0 0 35px rgba(201,169,110,0.1)",
+            }}
+          >
+            LET&apos;S CREATE
+            <br />
+
+            <span
+              style={{
+                color: "transparent",
+                WebkitTextStroke:
+                  "1px rgba(201,169,110,0.72)",
+              }}
+            >
+              TOGETHER.
+            </span>
+          </motion.h2>
+
+          <motion.p
+            variants={fadeUpVariant}
+            style={{
+              maxWidth: 520,
+              margin:
+                "25px auto 0",
+              fontFamily:
+                "var(--font-jakarta), sans-serif",
+              fontSize: 14,
+              lineHeight: 1.8,
+              color:
+                "rgba(255,255,255,0.48)",
+            }}
+          >
+            Ready to bring your vision to
+            life? Tell us about your project
+            and we&apos;ll respond within 24
+            hours.
+          </motion.p>
+        </div>
+
+        {/* =================================================
+            CONTACT GRID
+        ================================================= */}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "minmax(260px, 0.85fr) minmax(320px, 1.5fr)",
+            gap: 20,
+            alignItems: "start",
+          }}
+          className="contact-grid"
+        >
+          {/* ===============================================
+              LEFT COLUMN
+          =============================================== */}
+
+          <motion.div
+            variants={cardStagger}
+            style={{
+              display: "flex",
+              flexDirection:
+                "column",
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                marginBottom: 5,
+                fontFamily:
+                  "var(--font-geist-mono), monospace",
+                fontSize: 8,
+                letterSpacing:
+                  "0.2em",
+                color:
+                  "rgba(255,255,255,0.28)",
+              }}
+            >
+              CONTACT CHANNELS
+            </div>
+
+            {contactDetails.map(
+              (item) => (
+                <ContactCard
+                  key={item.label}
+                  item={item}
+                />
+              )
+            )}
+
+            {/* =========================================
+                WORK WITH CARD
+            ========================================= */}
+
+            <motion.div
+              variants={cardVariant}
+              style={{
+                position:
+                  "relative",
+                marginTop: 6,
+                padding: 24,
+                background:
+                  "rgba(201,169,110,0.035)",
+                border:
+                  "1px solid rgba(201,169,110,0.18)",
+              }}
+            >
+              <HudCorners />
+
+              <div
+                style={{
+                  marginBottom: 20,
+                  fontFamily:
+                    "var(--font-geist-mono), monospace",
+                  fontSize: 8,
+                  letterSpacing:
+                    "0.2em",
+                  color:
+                    "rgba(201,169,110,0.65)",
+                }}
+              >
+                WE WORK WITH
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 14,
+                }}
+              >
+                {clientTypes.map(
+                  (client) => (
+                    <div
+                      key={
+                        client.label
+                      }
+                      style={{
+                        display:
+                          "grid",
+                        gridTemplateColumns:
+                          "28px 1fr",
+                        gap: 10,
+                        alignItems:
+                          "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily:
+                            "var(--font-geist-mono), monospace",
+                          fontSize: 8,
+                          color:
+                            "rgba(201,169,110,0.45)",
+                        }}
+                      >
+                        {
+                          client.number
+                        }
+                      </span>
+
+                      <div>
+                        <div
+                          style={{
+                            fontFamily:
+                              "var(--font-jakarta), sans-serif",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color:
+                              "rgba(255,255,255,0.72)",
+                          }}
+                        >
+                          {
+                            client.label
+                          }
+                        </div>
+
+                        <div
+                          style={{
+                            marginTop: 2,
+                            fontFamily:
+                              "var(--font-jakarta), sans-serif",
+                            fontSize: 10,
+                            color:
+                              "rgba(255,255,255,0.3)",
+                          }}
+                        >
+                          {
+                            client.desc
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* ===============================================
+              RIGHT — FORM
+          =============================================== */}
+
+          <motion.form
+            onSubmit={
+              handleSubmit
+            }
+            variants={formVariant}
+            style={{
+              position:
+                "relative",
+              overflow:
+                "hidden",
+              padding:
+                "clamp(24px, 4vw, 38px)",
+              background:
+                "rgba(7,16,30,0.65)",
+              border:
+                "1px solid rgba(201,169,110,0.16)",
+              backdropFilter:
+                "blur(18px)",
+              WebkitBackdropFilter:
+                "blur(18px)",
+            }}
+          >
+            <HudCorners />
+
+            {/* Scan line */}
+
+            <motion.div
+              aria-hidden="true"
+              animate={{
+                y: [
+                  0,
+                  420,
+                ],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              style={{
+                position:
+                  "absolute",
+                top: -30,
+                left: 0,
+                right: 0,
+                height: 1,
+                background:
+                  "linear-gradient(90deg, transparent, rgba(201,169,110,0.8), transparent)",
+                opacity: 0.5,
+                pointerEvents:
+                  "none",
+              }}
+            />
+
+            {/* Form heading */}
+
+            <div
+              style={{
+                display:
+                  "flex",
+                alignItems:
+                  "center",
+                gap: 10,
+                marginBottom: 30,
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius:
+                    "50%",
+                  background:
+                    "#4ade80",
+                  boxShadow:
+                    "0 0 12px rgba(74,222,128,0.7)",
+                  animation:
+                    "glow-pulse 2.5s ease-in-out infinite",
+                }}
+              />
+
+              <span
+                style={{
+                  fontFamily:
+                    "var(--font-geist-mono), monospace",
+                  fontSize: 9,
+                  letterSpacing:
+                    "0.18em",
+                  color:
+                    "rgba(255,255,255,0.55)",
+                }}
+              >
+                CONNECTION READY
+              </span>
+            </div>
+
+            <h3
+              style={{
+                margin:
+                  "0 0 28px",
+                fontFamily:
+                  "var(--font-jakarta), sans-serif",
+                fontSize: 22,
+                fontWeight: 600,
+                letterSpacing:
+                  "-0.03em",
+                color: "#eee3ce",
+              }}
+            >
               Send Us a Message
             </h3>
 
+            {/* Name + email */}
+
             <div
-              style={{ display: "grid", gap: "1rem", marginBottom: "1rem" }}
-              className="sm:grid-cols-2"
+              style={{
+                display:
+                  "grid",
+                gridTemplateColumns:
+                  "repeat(2, minmax(0, 1fr))",
+                gap: 14,
+                marginBottom: 18,
+              }}
+              className="contact-form-row"
             >
               <div>
-                <label style={{ display: "block", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--w40)", marginBottom: "0.5rem" }}>
+                <label
+                  htmlFor="contact-name"
+                  style={{
+                    display:
+                      "block",
+                    marginBottom: 8,
+                    fontFamily:
+                      "var(--font-geist-mono), monospace",
+                    fontSize: 8,
+                    letterSpacing:
+                      "0.16em",
+                    textTransform:
+                      "uppercase",
+                    color:
+                      "rgba(255,255,255,0.35)",
+                  }}
+                >
                   Your Name
                 </label>
-                <input name="name" value={form.name} onChange={handleChange} placeholder="Alex Johnson" className="form-input" />
+
+                <input
+                  id="contact-name"
+                  name="name"
+                  type="text"
+                  value={form.name}
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Alex Johnson"
+                  className="form-input"
+                  autoComplete="name"
+                  required
+                />
               </div>
+
               <div>
-                <label style={{ display: "block", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--w40)", marginBottom: "0.5rem" }}>
+                <label
+                  htmlFor="contact-email"
+                  style={{
+                    display:
+                      "block",
+                    marginBottom: 8,
+                    fontFamily:
+                      "var(--font-geist-mono), monospace",
+                    fontSize: 8,
+                    letterSpacing:
+                      "0.16em",
+                    textTransform:
+                      "uppercase",
+                    color:
+                      "rgba(255,255,255,0.35)",
+                  }}
+                >
                   Email Address
                 </label>
-                <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="alex@company.com" className="form-input" />
+
+                <input
+                  id="contact-email"
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="alex@company.com"
+                  className="form-input"
+                  autoComplete="email"
+                  required
+                />
               </div>
             </div>
 
-            <div style={{ marginBottom: "1.75rem" }}>
-              <label style={{ display: "block", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--w40)", marginBottom: "0.5rem" }}>
-                Tell Us About Your Project
+            {/* Message */}
+
+            <div
+              style={{
+                marginBottom: 22,
+              }}
+            >
+              <label
+                htmlFor="contact-message"
+                style={{
+                  display:
+                    "block",
+                  marginBottom: 8,
+                  fontFamily:
+                    "var(--font-geist-mono), monospace",
+                  fontSize: 8,
+                  letterSpacing:
+                    "0.16em",
+                  textTransform:
+                    "uppercase",
+                  color:
+                    "rgba(255,255,255,0.35)",
+                }}
+              >
+                Tell Us About Your
+                Project
               </label>
+
               <textarea
+                id="contact-message"
                 name="message"
                 value={form.message}
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
                 placeholder="Describe your project — scope, timeline, goals, and any reference designs you love..."
                 className="form-input"
+                rows={7}
+                required
+                style={{
+                  resize:
+                    "vertical",
+                  minHeight: 160,
+                }}
               />
             </div>
 
-            <button
+            {/* Submit */}
+
+            <motion.button
               type="submit"
               disabled={sending}
               className="btn-primary"
-              style={{ width: "100%", justifyContent: "center", fontSize: "0.9rem", opacity: sending ? 0.7 : 1 }}
+              whileHover={
+                !sending
+                  ? {
+                      y: -2,
+                    }
+                  : undefined
+              }
+              whileTap={
+                !sending
+                  ? {
+                      scale: 0.98,
+                    }
+                  : undefined
+              }
+              style={{
+                width: "100%",
+                minHeight: 52,
+                justifyContent:
+                  "center",
+                gap: 10,
+                opacity:
+                  sending ? 0.65 : 1,
+                cursor:
+                  sending
+                    ? "not-allowed"
+                    : "pointer",
+              }}
             >
               {sending ? (
                 <>
-                  <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} style={{ opacity: 0.25 }} />
-                    <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" style={{ opacity: 0.75 }} />
-                  </svg>
+                  <Loader2
+                    size={16}
+                    className="animate-spin"
+                  />
+
                   Sending Message...
                 </>
               ) : (
                 <>
                   Send Message
-                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                  </svg>
+                  <Send
+                    size={15}
+                    strokeWidth={1.8}
+                  />
                 </>
               )}
-            </button>
+            </motion.button>
 
-            <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--w40)", marginTop: "1rem" }}>
+            {/* Direct email */}
+
+            <p
+              style={{
+                margin:
+                  "18px 0 0",
+                textAlign:
+                  "center",
+                fontFamily:
+                  "var(--font-jakarta), sans-serif",
+                fontSize: 10,
+                lineHeight: 1.6,
+                color:
+                  "rgba(255,255,255,0.3)",
+              }}
+            >
               Or email us directly at{" "}
-              <a href={`mailto:${ZALONT_EMAIL}`} style={{ color: "var(--gold)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+              <a
+                href={`mailto:${ZALONT_EMAIL}`}
+                style={{
+                  color:
+                    "#c9a96e",
+                  textDecoration:
+                    "none",
+                }}
+              >
                 {ZALONT_EMAIL}
               </a>
             </p>
-          </form>
+          </motion.form>
         </div>
-      </div>
+
+        {/* =================================================
+            BOTTOM STATUS
+        ================================================= */}
+
+        <motion.div
+          variants={fadeUpVariant}
+          style={{
+            display:
+              "flex",
+            alignItems:
+              "center",
+            justifyContent:
+              "space-between",
+            flexWrap:
+              "wrap",
+            gap: 15,
+            marginTop: 55,
+            paddingTop: 20,
+            borderTop:
+              "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <div
+            style={{
+              display:
+                "flex",
+              alignItems:
+                "center",
+              gap: 9,
+            }}
+          >
+            <span
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius:
+                  "50%",
+                background:
+                  "#c9a96e",
+                boxShadow:
+                  "0 0 10px rgba(201,169,110,0.7)",
+              }}
+            />
+
+            <span
+              style={{
+                fontFamily:
+                  "var(--font-geist-mono), monospace",
+                fontSize: 8,
+                letterSpacing:
+                  "0.16em",
+                color:
+                  "rgba(255,255,255,0.25)",
+              }}
+            >
+              CONNECTION OPEN
+            </span>
+          </div>
+
+          <span
+            style={{
+              fontFamily:
+                "var(--font-geist-mono), monospace",
+              fontSize: 8,
+              letterSpacing:
+                "0.16em",
+              color:
+                "rgba(201,169,110,0.35)",
+            }}
+          >
+            ZALONT / 05 / END
+          </span>
+        </motion.div>
+      </motion.div>
+
+      {/* ===================================================
+          RESPONSIVE
+      =================================================== */}
+
+      <style jsx>{`
+        @media (max-width: 800px) {
+          .contact-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .contact-form-row {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }

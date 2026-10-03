@@ -23,14 +23,15 @@
   --gold-glow:    rgba(201,169,110,0.25);
 
   /* White opacity scale */
-  --white:        #ffffff;
-  --w80:          rgba(255,255,255,0.90);
-  --w60:          rgba(255,255,255,0.75);
-  --w40:          rgba(255,255,255,0.55);
-  --w20:          rgba(255,255,255,0.25);
-  --w10:          rgba(255,255,255,0.15);
-  --w06:          rgba(255,255,255,0.08);
-  --w03:          rgba(255,255,255,0.04);
+/* White opacity scale — brighter for readability */
+--white:        #ffffff;
+--w80:          rgba(255,255,255,0.98);
+--w60:          rgba(255,255,255,0.92);
+--w40:          rgba(255,255,255,0.78);
+--w20:          rgba(255,255,255,0.45);
+--w10:          rgba(255,255,255,0.28);
+--w06:          rgba(255,255,255,0.16);
+--w03:          rgba(255,255,255,0.08);
 
   /* Borders */
   --border:       rgba(255,255,255,0.12);
@@ -49,7 +50,7 @@ html {
 
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  background: var(--bg-tone);
+  background: var(--bg);
   color: var(--white);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -74,19 +75,19 @@ body {
  * Dual-tone heading gradient:
  *   LEFT  → warm gold/cream  (#e8d5b7 → #c9a96e)
  *   RIGHT → cool steel/navy  (#5b9ec9 → #1a4a7a)
- * Mirrors the page background dual-tone (black + midnight navy).
  */
 .dual-text {
   background: linear-gradient(
     105deg,
-    #c9a96e 0%,
-    #e8d5b7 35%,
-    #fcfdfd 75%,
+    #e8c987 0%,
+    #f4e4c5 35%,
+    #ffffff 75%,
     #ffffff 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-shadow: 0 0 18px rgba(255,255,255,0.08);
 }
 
 /* Stronger white shift — for accent labels */
@@ -150,6 +151,46 @@ body {
 .surface {
   background: var(--surface);
   border: 1px solid var(--border);
+}
+
+/* ─── Holographic Card ─── */
+.holo-card {
+  background: rgba(7,16,30,0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+.holo-card:hover {
+  border-color: var(--border-gold);
+  box-shadow: 0 8px 40px rgba(201,169,110,0.12), 0 0 1px rgba(201,169,110,0.3);
+  transform: translateY(-4px);
+}
+
+/* Scan line sweep on hover */
+.holo-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(201,169,110,0.06), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+.holo-card:hover::after {
+  left: 100%;
+}
+
+/* ─── Terminal Text ─── */
+.terminal-text {
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  color: var(--gold);
+  letter-spacing: 0.08em;
 }
 
 /* ─── Buttons ─── */
@@ -237,7 +278,7 @@ body {
 .form-input::placeholder { color: rgba(255,255,255,0.25); }
 .form-input:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201,169,110,0.08);
+  box-shadow: 0 0 0 3px rgba(201,169,110,0.08), 0 0 20px rgba(201,169,110,0.06);
 }
 textarea.form-input { resize: vertical; min-height: 130px; }
 
@@ -270,7 +311,25 @@ textarea.form-input { resize: vertical; min-height: 130px; }
   animation: spin-tilt 20s linear infinite;
 }
 
-/* ─── Animations ─── */
+/* ─── Tag pill ─── */
+.tag-pill {
+  display: inline-block;
+  padding: 0.3rem 0.85rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--w60);
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════ */
+
+/* ── Existing Animations ── */
 @keyframes rotate-cube {
   0%   { transform: rotateX(15deg) rotateY(0deg); }
   100% { transform: rotateX(15deg) rotateY(360deg); }
@@ -323,6 +382,86 @@ textarea.form-input { resize: vertical; min-height: 130px; }
 }
 @keyframes blink { 50% { opacity: 0; } }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── NEW Cinematic Animations ── */
+
+/* Holographic scan sweep */
+@keyframes hologram-scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Glitch text distortion */
+@keyframes glitch-text {
+  0%, 100% { transform: translate(0); opacity: 1; }
+  10%  { transform: translate(-2px, 1px); opacity: 0.8; }
+  20%  { transform: translate(2px, -1px); opacity: 0.9; }
+  30%  { transform: translate(0); opacity: 1; }
+  40%  { transform: translate(1px, 2px); opacity: 0.85; }
+  50%  { transform: translate(-1px, -1px); opacity: 1; }
+}
+
+/* Pulsing glow border */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(201,169,110,0.2), 0 0 20px rgba(201,169,110,0.05); }
+  50%       { box-shadow: 0 0 15px rgba(201,169,110,0.4), 0 0 40px rgba(201,169,110,0.1); }
+}
+
+/* Neural network node pulse */
+@keyframes node-pulse {
+  0%, 100% { r: 3; opacity: 0.6; }
+  50%       { r: 5; opacity: 1; }
+}
+
+/* Vertical data stream flow */
+@keyframes data-stream-flow {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* Letter-by-letter reveal */
+@keyframes letter-reveal {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.8); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* Cinematic fade in from scale */
+@keyframes cinematic-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(30px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Horizontal line grow */
+@keyframes line-grow {
+  0%   { width: 0; opacity: 0; }
+  100% { width: 100%; opacity: 1; }
+}
+
+/* Border trace animation */
+@keyframes border-trace {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Floating holographic shimmer */
+@keyframes holo-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Typing cursor blink */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
 /* ─── Animation Utility Classes ─── */
 .animate-float       { animation: float 7s ease-in-out infinite; }
 .animate-float-alt   { animation: float-alt 9s ease-in-out infinite; }
@@ -333,31 +472,12 @@ textarea.form-input { resize: vertical; min-height: 130px; }
 .animate-blob        { animation: blob 12s ease-in-out infinite; }
 .animate-count-up    { animation: count-up 0.8s ease both; }
 .animate-blink       { animation: blink 1s step-end infinite; }
-
-/* ─── Neon/Glow accents ─── */
-.gold-glow {
-  text-shadow:
-    0 0 12px rgba(201,169,110,0.5),
-    0 0 36px rgba(201,169,110,0.25);
-}
-
-/* ─── Tag pill ─── */
-.tag-pill {
-  display: inline-block;
-  padding: 0.3rem 0.85rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: var(--w60);
-  text-transform: uppercase;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+.animate-glitch      { animation: glitch-text 3s ease-in-out infinite; }
+.animate-pulse-glow  { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-cinematic   { animation: cinematic-in 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-holo-shimmer {
+  background-size: 200% auto;
+  animation: holo-shimmer 4s linear infinite;
 }
 
 .animate-marquee {
@@ -368,4 +488,49 @@ textarea.form-input { resize: vertical; min-height: 130px; }
 
 .pause-on-hover:hover .animate-marquee {
   animation-play-state: paused;
+}
+
+/* ─── Neon/Glow accents ─── */
+.gold-glow {
+  text-shadow:
+    0 0 12px rgba(201,169,110,0.5),
+    0 0 36px rgba(201,169,110,0.25);
+}
+
+/* ─── Data Stream Decoration ─── */
+.data-stream-line {
+  position: absolute;
+  width: 1px;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+  animation: data-stream-flow 3s linear infinite;
+  opacity: 0.3;
+}
+
+/* ─── Holographic Border Glow ─── */
+.holo-border {
+  position: relative;
+}
+.holo-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201,169,110,0.3), transparent 40%, transparent 60%, rgba(201,169,110,0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── Section padding standard ─── */
+.section-padding {
+  padding: 8rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 5rem 1rem;
+  }
 }

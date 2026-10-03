@@ -2,8 +2,21 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-   images: {
-    domains: ['cdn.dribbble.com', 'images.unsplash.com', 'your-domain.com'], // ← Add allowed domains here
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.dribbble.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "your-domain.com",
+      },
+    ],
   },
 };
 

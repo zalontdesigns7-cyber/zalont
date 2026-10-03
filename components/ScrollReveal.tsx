@@ -1,47 +1,266 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
+import {
+  motion,
+  useInView,
+  type Variants,
+} from "framer-motion";
+
+/* ============================================================
+   TYPES
+============================================================ */
 
 interface ScrollRevealProps {
   children: React.ReactNode;
+
+  delay?: number;
+
+  direction?:
+    | "up"
+    | "down"
+    | "left"
+    | "right"
+    | "none";
+
+  duration?: number;
+
   className?: string;
-  delay?: number; // delay in ms
+
+  style?: React.CSSProperties;
+
+  once?: boolean;
 }
 
-export default function ScrollReveal({ children, className = "", delay = 0 }: ScrollRevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+/* ============================================================
+   DIRECTION MAP
+============================================================ */
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Optional: stop observing once it's visible so it doesn't animate out and in repeatedly
-          if (ref.current) observer.unobserve(ref.current);
-        }
-      },
-      {
-        threshold: 0.15, // Trigger when 15% of the element is visible
-        rootMargin: "0px 0px -50px 0px",
-      }
-    );
+const directionMap = {
+  up: {
+    x: 0,
+    y: 40,
+  },
 
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+  down: {
+    x: 0,
+    y: -40,
+  },
+
+  left: {
+    x: -40,
+    y: 0,
+  },
+
+  right: {
+    x: 40,
+    y: 0,
+  },
+
+  none: {
+    x: 0,
+    y: 0,
+  },
+} as const;
+
+/* ============================================================
+   SHARED EASING
+============================================================ */
+
+const cinematicEase = [
+  0.16,
+  1,
+  0.3,
+  1,
+] as const;
+
+/* ============================================================
+   SCROLL REVEAL
+============================================================ */
+
+export default function ScrollReveal({
+  children,
+
+  delay = 0,
+
+  direction = "up",
+
+  duration = 0.7,
+
+  className = "",
+
+  style = {},
+
+  once = true,
+}: ScrollRevealProps) {
+  const ref =
+    useRef<HTMLDivElement>(null);
+
+  const isInView = useInView(ref, {
+    once,
+    margin: "-60px",
+  });
+
+  const offset =
+    directionMap[direction];
+
+  const initialScale =
+    direction === "none"
+      ? 0.95
+      : 1;
 
   return (
-    <div
+    <motion.div
       ref={ref}
       className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(40px)",
-        transition: `opacity 0.8s ease ${delay}ms, transform 0.8s ease ${delay}ms`,
+      style={style}
+      initial={{
+        opacity: 0,
+        x: offset.x,
+        y: offset.y,
+        scale: initialScale,
+      }}
+      animate={
+        isInView
+          ? {
+              opacity: 1,
+              x: 0,
+              y: 0,
+              scale: 1,
+            }
+          : undefined
+      }
+      transition={{
+        duration,
+        delay,
+        ease: cinematicEase,
       }}
     >
       {children}
-    </div>
+    </motion.div>
+  );
+}
+
+/* ============================================================
+   STAGGER CONTAINER
+============================================================ */
+
+interface StaggerContainerProps {
+  children: React.ReactNode;
+
+  staggerDelay?: number;
+
+  className?: string;
+
+  style?: React.CSSProperties;
+
+  once?: boolean;
+}
+
+export function StaggerContainer({
+  children,
+
+  staggerDelay = 0.1,
+
+  className = "",
+
+  style = {},
+
+  once = true,
+}: StaggerContainerProps) {
+  const ref =
+    useRef<HTMLDivElement>(null);
+
+  const isInView = useInView(ref, {
+    once,
+    margin: "-40px",
+  });
+
+  const variants: Variants = {
+    hidden: {},
+
+    visible: {
+      transition: {
+        staggerChildren:
+          staggerDelay,
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      style={style}
+      initial="hidden"
+      animate={
+        isInView
+          ? "visible"
+          : "hidden"
+      }
+      variants={variants}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ============================================================
+   STAGGER ITEM
+============================================================ */
+
+interface StaggerItemProps {
+  children: React.ReactNode;
+
+  className?: string;
+
+  style?: React.CSSProperties;
+
+  direction?:
+    | "up"
+    | "down"
+    | "left"
+    | "right";
+}
+
+export function StaggerItem({
+  children,
+
+  className = "",
+
+  style = {},
+
+  direction = "up",
+}: StaggerItemProps) {
+  const offset =
+    directionMap[direction];
+
+  const variants: Variants = {
+    hidden: {
+      opacity: 0,
+      x: offset.x,
+      y: offset.y,
+    },
+
+    visible: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+
+      transition: {
+        duration: 0.6,
+        ease: cinematicEase,
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className={className}
+      style={style}
+      variants={variants}
+    >
+      {children}
+    </motion.div>
   );
 }
