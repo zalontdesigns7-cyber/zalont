@@ -32,7 +32,7 @@ export default function Footer() {
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, transparent 0%, rgba(7,16,30,0.70) 50%, rgba(5,10,18,0.85) 100%)",
+            "linear-gradient(180deg, transparent 0%, rgba(7,16,30,0.30) 100%)",
           pointerEvents: "none",
         }}
       />

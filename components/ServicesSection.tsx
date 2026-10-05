@@ -183,8 +183,8 @@ const containerVariants: Variants = {
 const cardVariants: Variants = {
   hidden: {
     opacity: 0,
-    y: 40,
-    scale: 0.97,
+    y: 55,
+    scale: 0.88,
   },
 
   visible: {
@@ -193,7 +193,7 @@ const cardVariants: Variants = {
     scale: 1,
 
     transition: {
-      duration: 0.65,
+      duration: 0.75,
       ease: cinematicEase,
     },
   },
@@ -202,15 +202,17 @@ const cardVariants: Variants = {
 const headerVariants: Variants = {
   hidden: {
     opacity: 0,
-    y: 30,
+    y: 35,
+    scale: 0.94,
   },
 
   visible: {
     opacity: 1,
     y: 0,
+    scale: 1,
 
     transition: {
-      duration: 0.7,
+      duration: 0.75,
       ease: cinematicEase,
     },
   },
@@ -701,11 +703,8 @@ export default function ServicesSection() {
 
         <motion.div
           initial="hidden"
-          animate={
-            isInView
-              ? "visible"
-              : "hidden"
-          }
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
           variants={headerVariants}
           style={{
             display: "flex",
@@ -867,11 +866,8 @@ export default function ServicesSection() {
 
         <motion.div
           initial="hidden"
-          animate={
-            isInView
-              ? "visible"
-              : "hidden"
-          }
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
           variants={containerVariants}
           style={{
             display: "grid",

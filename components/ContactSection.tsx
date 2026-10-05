@@ -619,8 +619,7 @@ export default function ContactSection() {
         position: "relative",
         minHeight: "100vh",
         overflow: "hidden",
-        background:
-          "radial-gradient(circle at 50% 35%, rgba(201,169,110,0.045), transparent 35%), #020408",
+        background: "transparent",
         color: "#ffffff",
         padding:
           "clamp(100px, 12vw, 160px) 20px 70px",

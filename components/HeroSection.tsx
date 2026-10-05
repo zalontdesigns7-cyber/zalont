@@ -487,8 +487,7 @@ export default function HeroSection() {
         position: "relative",
         overflow: "hidden",
         padding: "80px 24px 20px",
-        background:
-          "#020408",
+        background: "transparent",
       }}
     >
       {/* ===================================================

@@ -102,13 +102,15 @@ const containerVariants: Variants = {
 const fadeUp: Variants = {
   hidden: {
     opacity: 0,
-    y: 28,
+    y: 45,
+    scale: 0.88,
   },
   visible: {
     opacity: 1,
     y: 0,
+    scale: 1,
     transition: {
-      duration: 0.7,
+      duration: 0.8,
       ease: [0.16, 1, 0.3, 1],
     },
   },
@@ -130,13 +132,15 @@ const fadeIn: Variants = {
 const slideRight: Variants = {
   hidden: {
     opacity: 0,
-    x: -24,
+    x: -30,
+    scale: 0.92,
   },
   visible: {
     opacity: 1,
     x: 0,
+    scale: 1,
     transition: {
-      duration: 0.65,
+      duration: 0.8,
       ease: [0.16, 1, 0.3, 1],
     },
   },
@@ -622,8 +626,7 @@ export default function AboutSection() {
       style={{
         position: "relative",
         overflow: "hidden",
-        background:
-          "linear-gradient(180deg, #020408 0%, #050912 50%, #020408 100%)",
+        background: "transparent",
         color: "#fff",
         padding:
           "clamp(90px, 11vw, 150px) 20px",
@@ -724,7 +727,8 @@ export default function AboutSection() {
       <motion.div
         variants={containerVariants}
         initial="hidden"
-        animate={isInView ? "visible" : "hidden"}
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
         style={{
           position: "relative",
           zIndex: 2,
@@ -866,7 +870,10 @@ export default function AboutSection() {
         =================================================== */}
 
         <motion.div
-          variants={fadeUp}
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
           style={{
             marginBottom: 90,
           }}
@@ -950,7 +957,11 @@ export default function AboutSection() {
             MAIN ABOUT GRID
         =================================================== */}
 
-        <div
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
           style={{
             display: "grid",
             gridTemplateColumns:
@@ -1151,13 +1162,17 @@ export default function AboutSection() {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* ===================================================
             FEATURES + FOUNDERS
         =================================================== */}
 
-        <div
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
           style={{
             display: "grid",
             gridTemplateColumns:
@@ -1384,7 +1399,7 @@ export default function AboutSection() {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* ===================================================
             STATS
@@ -1392,6 +1407,9 @@ export default function AboutSection() {
 
         <motion.div
           variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
           style={{
             position: "relative",
             display: "grid",

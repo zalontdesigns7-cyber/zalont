@@ -703,8 +703,7 @@ export default function ProjectShowcase() {
       style={{
         position: "relative",
         overflow: "hidden",
-        background:
-          "linear-gradient(180deg, transparent, rgba(7,16,30,0.12), transparent)",
+        background: "transparent",
       }}
     >
       {/* ==================================================

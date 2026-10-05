@@ -21,8 +21,9 @@ export default function TechStackMarquee() {
       style={{
         position: "relative",
         padding: "2.5rem 0",
-        background:
-          "linear-gradient(180deg, rgba(7,16,30,0.75), rgba(4,4,4,0.95))",
+        background: "rgba(7,16,30,0.30)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
         borderTop: "1px solid var(--border)",
         borderBottom: "1px solid var(--border)",
         overflow: "hidden",

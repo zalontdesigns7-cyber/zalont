@@ -43,14 +43,16 @@ const containerVariants: Variants = {
 const cardVariants: Variants = {
   hidden: {
     opacity: 0,
-    y: 50,
+    y: 60,
+    scale: 0.88,
   },
   visible: {
     opacity: 1,
     y: 0,
+    scale: 1,
     transition: {
-      duration: 0.8,
-      ease: [0.22, 1, 0.36, 1],
+      duration: 0.85,
+      ease: [0.16, 1, 0.3, 1],
     },
   },
 };
@@ -63,8 +65,7 @@ export default function TeamSection() {
         position: "relative",
         padding: "8rem 1.5rem",
         overflow: "hidden",
-        background:
-          "radial-gradient(circle at 50% 40%, rgba(26,74,122,0.08), transparent 55%)",
+        background: "transparent",
       }}
     >
       {/* Ambient background */}
@@ -126,12 +127,12 @@ export default function TeamSection() {
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40, scale: 0.94 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
+            duration: 0.85,
+            ease: [0.16, 1, 0.3, 1],
           }}
           style={{
             display: "flex",
@@ -240,9 +241,11 @@ export default function TeamSection() {
                   minHeight: 500,
                   padding: "2.5rem",
                   background:
-                    "linear-gradient(145deg, rgba(11,15,21,0.98), rgba(4,4,4,0.98))",
+                    "linear-gradient(145deg, rgba(11,15,21,0.65), rgba(4,7,12,0.65))",
+                  backdropFilter: "blur(18px)",
+                  WebkitBackdropFilter: "blur(18px)",
                   overflow: "hidden",
-                  border: "1px solid rgba(255,255,255,0.025)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
                 {/* Hover glow */}
